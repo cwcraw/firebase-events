@@ -2,7 +2,8 @@ const { db } = require('../util/admin');
 
 exports.getAllEvents = (request, response) => {
 	db
-		.collection('events')
+        .collection('events')
+        .where('username', '==', request.user.username)
 		.orderBy('Time', 'desc')
 		.get()
 		.then((data) => {
@@ -27,8 +28,6 @@ exports.getAllEvents = (request, response) => {
 };
 
 exports.postEvent = (request, response) => {
-    console.log(request.body.Event)
-    console.log(request.body.Event.trim())
 	if (request.body.Event.trim() === '') {
 		return response.status(400).json({ Event: 'Event not be empty' });
     }
@@ -41,6 +40,7 @@ exports.postEvent = (request, response) => {
     }
     
     const newEventItem = {
+        username: request.user.username,
         Event: request.body.Event,
         Location: request.body.Location,
         Time: request.body.Time,
@@ -66,6 +66,9 @@ exports.deleteEvent = (request, response) => {
     document
         .get()
         .then((doc) => {
+            if(doc.data().username !== request.user.username){
+                return response.status(403).json({error:"Unauthorized"})
+           }
             if (!doc.exists) {
                 return response.status(404).json({ error: 'Event not found' })
             }
